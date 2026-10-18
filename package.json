@@ -56,7 +56,9 @@
     "README.md",
     "README.en.md",
     "RELEASING.md",
-    "LICENSE"
+    "LICENSE",
+    "docs",
+    "screenshots.json"
   ],
   "engines": {
     "dsh": "0.2.0-rc.2 || 0.2.1-rc.1"

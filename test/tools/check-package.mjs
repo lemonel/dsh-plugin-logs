@@ -19,8 +19,12 @@ const manifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
 assert.equal(result.name, manifest.name)
 assert.equal(result.version, manifest.version)
 const documentation = new Set(['README.md', 'README.en.md', 'RELEASING.md', 'LICENSE'])
-for (const path of paths) assert.ok(path === 'package.json' || documentation.has(path) || path === 'icon.svg' || /^lib\/.+\.(?:js|mjs)$/.test(path) || path === 'bundles/plugin-logs.patch.yml', `Unexpected published file: ${path}`)
+const screenshots = JSON.parse(await readFile(join(root, 'screenshots.json'), 'utf8'))
+assert.ok(Array.isArray(screenshots) && screenshots.length > 0)
+for (const path of screenshots) assert.match(path, /^docs\/[^/]+\.png$/)
+for (const path of paths) assert.ok(path === 'package.json' || documentation.has(path) || path === 'icon.svg' || path === 'screenshots.json' || screenshots.includes(path) || /^lib\/.+\.(?:js|mjs)$/.test(path) || path === 'bundles/plugin-logs.patch.yml', `Unexpected published file: ${path}`)
 for (const path of documentation) assert.ok(paths.includes(path), `Missing user documentation: ${path}`)
+for (const path of ['screenshots.json', ...screenshots]) assert.ok(paths.includes(path), `Missing screenshot asset: ${path}`)
 for (const path of [...Object.values(manifest.exports), manifest.dsh.bundle.patch, manifest.icon]) assert.ok(paths.includes(path.replace(/^\.\//, '')), `Missing package target: ${path}`)
 async function outputs(directory = 'lib') {
   const result = []

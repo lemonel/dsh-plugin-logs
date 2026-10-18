@@ -1,8 +1,14 @@
 # 插件日志（Plugin Logs）
 
-在 DSH 右侧栏查看 Host 运行日志：按来源和级别筛选，用多个正则条件搜索，暂停、恢复或清空当前列表，也可以按需让当前 Agent 查询近期日志。日志只保存在 Host 内存中，不写入磁盘。
+在 DSH 右侧栏查看 Host 运行日志：按来源和级别筛选，用多个正则条件搜索（任一匹配），暂停、继续或清屏，也可以按需让当前 Agent 查询近期日志。日志只保存在 Host 内存中，不写入磁盘。
 
 [English](./README.en.md)
+
+## 界面
+
+![插件日志面板](docs/panel-zh.png)
+
+截图来自 DSH `0.2.0-rc.2` 的 Web 界面（Chrome 150 / Linux）。来源、级别和正则条件在面板上方，日志列表位于下方；「暂停 / 清屏」和「为此 Agent 启用日志查询与来源 Tool」分别控制读取和 Agent 访问。
 
 ## 适用场景
 
@@ -12,25 +18,27 @@
 
 ## 安装
 
-要求 DSH `0.2.0-rc.2` 或 `0.2.1-rc.1`；从源码构建还需要 Node.js 22。
+要求 DSH `0.2.0-rc.2` 或 `0.2.1-rc.1`。安装预构建包不需要 Node.js 或 TypeScript。
 
-本仓库暂未提供公开的预构建 tgz。先在插件目录构建：
+安装 v1.0.0 预构建包：
 
 ```sh
-cd /absolute/path/to/plugin-logs
+dsh plugin --profile web add https://github.com/lemonel/dsh-plugin-logs/releases/download/v1.0.0/lemonel-dsh-plugin-logs-1.0.0.tgz
+```
+
+将 `web` 替换为实际 profile。确认 `@lemonel/dsh-plugin-logs` 已作为 bundle 启用（Loader 条目 ID 为 `lemonel-plugin-logs`），按 DSH 提示重载后端并刷新页面。也可以先下载 tgz，在 DSH 的 Plugins 页从本地文件安装。
+
+从源码构建需要 Node.js 22：
+
+```sh
+git clone https://github.com/lemonel/dsh-plugin-logs.git
+cd dsh-plugin-logs
 npm ci --prefer-offline --no-audit --no-fund
 npm run build
+dsh plugin --profile web add "$PWD"
 ```
 
-然后在 DSH 的 Plugins 页从本地路径安装，或执行：
-
-```sh
-dsh plugin --profile web add /absolute/path/to/plugin-logs
-```
-
-将 `web` 替换为实际 profile。确认 `@lemonel/dsh-plugin-logs` 已作为 bundle 启用（Loader 条目 ID 为 `lemonel-plugin-logs`），按 DSH 提示重载后端并刷新页面。构建或打包不会自动安装插件、重启 Host，也不会更新已经打开的页面。本地依赖链接应指向包根目录，而不是 `lib/`。
-
-请通过 DSH 的管理流程安装和重载，不要手动修改运行中的 profile。
+本地依赖链接应指向包根目录，而不是 `lib/`。构建或打包不会自动安装插件、重启 Host，也不会更新已经打开的页面。请通过 DSH 的管理流程安装和重载，不要手动修改运行中的 profile。
 
 ## 使用
 
@@ -74,19 +82,13 @@ dsh plugin --profile web add /absolute/path/to/plugin-logs
 | Node.js 22 | 构建与测试使用 |
 | 其他 Node.js 版本 | 未实测 |
 | Windows / macOS 原生运行 | 未实测 |
-| 真实浏览器交互 | 未验收；组件测试使用 jsdom 和真实 Worker 线程，不等于浏览器验收 |
+| 真实浏览器 | 已用 Chrome 150（Linux，无头）加载真实 DSH Web 实例，完成本文截图及筛选操作；未做桌面手工、跨平台或完整交互验收 |
 
-宿主包以 `peerDependencies` 声明并限定上述两个 DSH 预发布范围；不匹配时 DSH 会禁用该插件。正则搜索还要求浏览器支持 Worker 和 Blob URL。
-
-## 从旧包名升级
-
-原先的 `@hsx/dsh-plugin-logs` 已改名为 `@lemonel/dsh-plugin-logs`，bundle 配置中的 Loader 条目 ID 改为 `lemonel-plugin-logs`。升级时先停用旧 bundle，再安装并启用新包，确认后移除旧依赖；不要同时启用两份。
-
-此插件不持久化日志，没有需要迁移的日志或存储目录。`pluginLogs` Remote namespace、`plugin_logs_*` 工具名、`plugin-logs` 面板 kind 和语言 namespace 保持兼容；RPC 包标识与客户端注册 ID 随包名变化，Host 和浏览器必须加载同一版新产物。涉及 Host 模块或 Remote 标识的变更需要重载后端并刷新页面。
+宿主包以 `peerDependencies` 声明并限定上述两个 DSH 预发布范围；不匹配时 DSH 会禁用该插件。正则搜索还要求浏览器支持 Worker 和 Blob URL。无头浏览器截图不等于桌面环境或所有浏览器的验收。
 
 ## 开发
 
-源码采用 [MIT 许可证](./LICENSE)，作者为 lemonel。GitHub CI 对分支、PR 和手动运行验证两个 DSH 版本；`v*` 标签触发 Release，复用完整 CI，再打包、校验并上传 tgz 与 SHA-256 校验文件。只有发布任务有仓库写权限，使用 Actions 自带令牌，不需要个人 token 或 npm secret；不会发布到 npm（保留 `private: true` 防止误发布）。首次发布前的操作见[发布清单](./RELEASING.md)。工作流配置不代表云端验证或发布已经完成。
+源码采用 [MIT 许可证](./LICENSE)，作者为 lemonel。GitHub CI 对分支、PR 和手动运行验证两个 DSH 版本；`v*` 标签触发 Release，复用完整 CI，再打包、校验并上传 tgz 与 SHA-256 校验文件。只有发布任务有仓库写权限，使用 Actions 自带令牌，不需要个人 token 或 npm secret；不会发布到 npm（保留 `private: true` 防止误发布）。发布步骤见[发布清单](./RELEASING.md)。
 
 ```sh
 npm ci --prefer-offline --no-audit --no-fund
@@ -101,5 +103,6 @@ npm run check:compat
 - 业务源码使用 strict TypeScript：入口为 `src/backend_index.ts` 和 `src/frontend_index.ts`，实现分别放在 `src/backend/` 与 `src/frontend/`，`src/shared/` 只放两端共用的协议、RPC 契约和边界校验。手写构建与测试脚本保留 JavaScript。
 - `npm run build` 先类型检查，再清理并重建被忽略的 `lib/`；前端由 esbuild 按依赖图生成 ModuleLoader bundle，RPC 描述符引用实际产物。`lib/` 不提交、不手改；本地链接安装前先构建，包入口不需要 TS 加载器。
 - 测试辅助脚本放在 `test/tools/`。`check:clean` 从独立源码副本执行锁文件安装、类型检查、完整构建、全部测试和实际 tgz 检查；`check:compat` 对两个受支持的 DSH 版本各执行一次，替代版本只在副本中生成锁文件后继续用 `npm ci`。检查依赖必须来自副本本地，缺失时失败，不回退全局安装；不使用 `--force` 或 `--legacy-peer-deps`。
-- 发布包只含 `lib/`、`bundles/plugin-logs.patch.yml`、`icon.svg`、两份 README、发布清单、MIT `LICENSE` 和 `package.json`；`prepack` 会自动构建。Bundle 配置由 `dsh.bundle.patch` 显式引用。
-- 槽位、Remote、Worker、定时器和事件监听都随插件或组件销毁清理；插件重载后 Host 缓冲清空，需要刷新页面重新建立 tail。涉及 Host 入口或 Remote 标识的更新通常要重载后端，不能只依赖 HMR。审查和测试覆盖了生命周期清理，但没有完成真实浏览器交互或跨平台验收。
+- 发布配置包含 `lib/`、`bundles/plugin-logs.patch.yml`、`icon.svg`、两份 README、发布清单、`docs/` 截图、`screenshots.json`、MIT `LICENSE` 和 `package.json`；`prepack` 会自动构建。Bundle 配置由 `dsh.bundle.patch` 显式引用。
+- 界面或用户文案变化时，重新截取 `docs/panel-zh.png` 与 `docs/panel-en.png`，保持两张图与当前界面一致，并确认截图不含个人路径、凭据或其他敏感内容；`screenshots.json` 列出市场展示用的截图。
+- 槽位、Remote、Worker、定时器和事件监听都随插件或组件销毁清理；插件重载后 Host 缓冲清空，需要刷新页面重新建立 tail。涉及 Host 入口或 Remote 标识的更新通常要重载后端，不能只依赖 HMR。审查和测试覆盖了生命周期清理，但没有完成桌面手工交互或跨平台验收。

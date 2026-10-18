@@ -10,7 +10,7 @@ export const projectRoot = fileURLToPath(new URL('../../', import.meta.url))
 export const installFlags = ['--prefer-offline', '--no-audit', '--no-fund']
 // Deliberate source inputs, not a Git-cleanliness claim. Never copy an installed
 // dependency, generated lib, archive, profile, or another plugin into a fixture.
-export const sourceInputs = ['package.json', 'package-lock.json', 'build.mjs', 'tsconfig.json', '.gitignore', '.github', 'README.md', 'README.en.md', 'RELEASING.md', 'LICENSE', 'icon.svg', 'bundles', 'src', 'test']
+export const sourceInputs = ['package.json', 'package-lock.json', 'build.mjs', 'tsconfig.json', '.gitignore', '.github', 'README.md', 'README.en.md', 'RELEASING.md', 'LICENSE', 'icon.svg', 'screenshots.json', 'docs', 'bundles', 'src', 'test']
 const excluded = new Set(['node_modules', 'lib', '.git', '.cache', '.npm'])
 const markerName = '.plugin-logs-verification'
 const dependencyFields = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
