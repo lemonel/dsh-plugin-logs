@@ -21,7 +21,7 @@ Create an empty `lemonel/dsh-plugin-logs` repository, authorize your SSH key, pu
 
 1. 完成真实 DSH 界面的主要操作验收，包括中英文、筛选、暂停/继续、Tools 作用域及重载；未覆盖的平台保持标注“未实测”。
 2. 确认发布渠道为 **GitHub Release**。npm 发布尚未授权，保留 `private: true`；不要使用 `npm publish`。
-3. 检查版本及锁文件。首版当前为 `0.1.0`；若调整版本，用 `npm version <version> --no-git-tag-version` 同步两者，再提交。不要移动已发布标签。
+3. 检查版本及锁文件。首版当前为 `1.0.0`；若调整版本，用 `npm version <version> --no-git-tag-version` 同步两者，再提交。不要移动已发布标签。
 4. 运行以下命令并提交预期变更，推送 `main`，等待 GitHub 两个 DSH 版本的 CI 均通过：
 
 ```sh
@@ -36,12 +36,12 @@ git diff --check
 5. **明确确认发版后**，给已验证提交创建新标签。首次发布示例（仅供手动执行）：
 
 ```sh
-git tag -a v0.1.0 -m "Release v0.1.0"
-git push origin v0.1.0
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
 ```
 
 6. Actions 的 Release 流程会检查标签、包版本及锁文件根版本一致，复用完整 CI，锁文件安装后通过 `prepack` 构建，再检查真实 tgz 的内容、入口及运行加载。独立只读打包任务上传已验证 tgz 与校验文件；写权限任务不安装依赖、不构建，只校验附件、远端标签仍指向已测提交，再创建 Release。预发布版本标记为 Pre-release；已存在 Release 时拒绝覆盖，失败需人工检查，禁止移动标签或静默替换附件。
-7. 分别确认标签已推送、云端测试通过、Release 已创建、tgz 与校验文件可公开下载。首版附件名为 `lemonel-dsh-plugin-logs-0.1.0.tgz`，使用固定标签下载地址；不承诺 `latest/download/` 的版本化文件名长期可用。
+7. 分别确认标签已推送、云端测试通过、Release 已创建、tgz 与校验文件可公开下载。首版附件名为 `lemonel-dsh-plugin-logs-1.0.0.tgz`，使用固定标签下载地址；不承诺 `latest/download/` 的版本化文件名长期可用。
 8. 只有附件真实可下载并完成安装验证后，才把两份 README 的源码安装入口改为预构建包优先（单独 `docs:` 提交，不移动已发布标签）。
 
 After explicit approval, tag the tested commit with a version matching both manifests and push that tag. Release reuses full CI and publishes only the checked tgz plus checksum. Prereleases are marked accordingly; existing releases are never overwritten. Verify cloud tests, release creation, downloads, and installation separately, then update both READMEs to prefer the actual release asset. npm publication is not enabled.
@@ -51,7 +51,7 @@ After explicit approval, tag the tested commit with a version matching both mani
 以下地址只有首版 Release 成功且可公开下载后才有效；目前不是已发布声明：
 
 ```sh
-dsh plugin --profile web add https://github.com/lemonel/dsh-plugin-logs/releases/download/v0.1.0/lemonel-dsh-plugin-logs-0.1.0.tgz
+dsh plugin --profile web add https://github.com/lemonel/dsh-plugin-logs/releases/download/v1.0.0/lemonel-dsh-plugin-logs-1.0.0.tgz
 ```
 
 将 `web` 替换为实际 profile；确认 bundle 已启用，并按 DSH 提示重载后端、刷新页面。不要直接安装未构建的 GitHub 源码归档。The URL becomes valid only after publication; replace the profile, enable the bundle, reload the backend, and refresh the page.
