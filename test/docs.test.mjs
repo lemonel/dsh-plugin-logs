@@ -49,7 +49,7 @@ test('package metadata ships both user documents and the market icon', async () 
 
 test('the market screenshots exist, are real PNG images and match the READMEs', async () => {
   const screenshots = JSON.parse(await read('screenshots.json'))
-  assert.deepEqual(screenshots, ['docs/panel-zh.png', 'docs/panel-en.png'])
+  assert.deepEqual(screenshots, ['docs/entry-zh.png', 'docs/panel-zh.png', 'docs/entry-en.png', 'docs/panel-en.png'])
   for (const path of screenshots) {
     const bytes = await readBytes(path)
     assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10], `${path} must be a PNG`)
@@ -59,7 +59,9 @@ test('the market screenshots exist, are real PNG images and match the READMEs', 
     assert.ok(bytes.length < 300 * 1024, `${path} is unreasonably large`)
   }
   assert.match(await read('README.md'), /!\[[^\]]*\]\(docs\/panel-zh\.png\)/)
+  assert.match(await read('README.md'), /!\[[^\]]*\]\(docs\/entry-zh\.png\)/)
   assert.match(await read('README.en.md'), /!\[[^\]]*\]\(docs\/panel-en\.png\)/)
+  assert.match(await read('README.en.md'), /!\[[^\]]*\]\(docs\/entry-en\.png\)/)
 })
 
 test('the market icon is a self-contained, labelled SVG', async () => {

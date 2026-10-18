@@ -42,6 +42,10 @@ Link local dependencies at the package root, not at `lib/`. Building or packing 
 
 ## Usage
 
+The entry is on the right-sidebar guide page:
+
+![Plugin logs entry in the right sidebar guide](docs/entry-en.png)
+
 1. Open the right sidebar and choose *Plugin logs* on the guide page.
 2. *Log source* lists logger names present in the current list (usually containing a plugin or service name) and filters by exact name; *All sources* does not filter. A selected source stays in the list and is marked as having no records when it leaves the current window.
 3. *Log level* intersects with the source and search conditions.
