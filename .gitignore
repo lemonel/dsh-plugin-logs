@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Generated output
+lib/
+coverage/
+dist/
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+*.tgz
+*.log
+
+# Local environment
+.env
+.env.*
+!.env.example

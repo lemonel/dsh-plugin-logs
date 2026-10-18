@@ -1,0 +1,110 @@
+name: GitHub Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+# Do not race two attempts for the same version, or cancel a partial release.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  build:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      filename: ${{ steps.version.outputs.filename }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Validate tag, package and lock versions
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node test/tools/release.mjs validate
+      - name: Record tested commit
+        id: commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Install locked dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Build and validate actual archive, then export those exact bytes
+        run: npm run check:package -- --output-dir "$RUNNER_TEMP/release-package"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: validated-release-package
+          path: |
+            ${{ runner.temp }}/release-package/${{ steps.version.outputs.filename }}
+            ${{ runner.temp }}/release-package/${{ steps.version.outputs.filename }}.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.ref_name }}
+      TESTED_SHA: ${{ needs.build.outputs.sha }}
+      ASSET: ${{ needs.build.outputs.filename }}
+      PRERELEASE: ${{ needs.build.outputs.prerelease }}
+    steps:
+      # No checkout, dependency install, build, or execution of downloaded code.
+      - uses: actions/download-artifact@v4
+        with:
+          name: validated-release-package
+          path: release-package
+      - name: Verify artifact, remote tag and absence of an existing release
+        working-directory: release-package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$ASSET"
+          test -f "$ASSET.sha256"
+          shopt -s nullglob dotglob
+          files=(*)
+          test "${#files[@]}" -eq 2
+          printf '%s  %s\n' "$(sha256sum "$ASSET" | cut -d ' ' -f1)" "$ASSET" | cmp - "$ASSET.sha256"
+          # Resolve lightweight AND annotated tags (including nested tag objects).
+          object=$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq '.object')
+          for attempt in {1..16}; do
+            type=$(jq -r '.type' <<< "$object")
+            sha=$(jq -r '.sha' <<< "$object")
+            if [[ "$type" == commit ]]; then break; fi
+            [[ "$type" == tag ]] || { echo 'Tag does not resolve to a commit' >&2; exit 1; }
+            object=$(gh api "repos/$GH_REPO/git/tags/$sha" --jq '.object')
+          done
+          [[ "$type" == commit && "$sha" == "$TESTED_SHA" ]] || { echo 'Remote tag no longer matches tested commit' >&2; exit 1; }
+          # API failure must fail closed; include drafts and prereleases, not just latest.
+          gh api --paginate "repos/$GH_REPO/releases?per_page=100" --jq '.[].tag_name' > "$RUNNER_TEMP/release-tags"
+          if grep -Fxq -- "$RELEASE_TAG" "$RUNNER_TEMP/release-tags"; then
+            echo 'Release already exists; inspect partial releases manually, never overwrite' >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" "$ASSET" "$ASSET.sha256" \
+            --verify-tag --target "$TESTED_SHA" --title "$RELEASE_TAG" \
+            --generate-notes --prerelease="$PRERELEASE"
